@@ -1,24 +1,28 @@
 {
-  "name": "frontend",
+  "name": "riverside-clone",
   "version": "0.1.0",
   "private": true,
   "scripts": {
-    "dev": "next dev --turbopack",
+    "dev": "next dev",
     "build": "next build",
     "start": "next start",
     "lint": "next lint"
   },
   "dependencies": {
-    "@clerk/nextjs": "^6.18.5",
-    "next": "15.3.1",
-    "react": "^19.0.0",
-    "react-dom": "^19.0.0"
+    "@clerk/nextjs": "^4.24.1",
+    "mediasoup-client": "^3.6.98",
+    "nanoid": "^5.0.1",
+    "next": "13.5.4",
+    "react": "^18",
+    "react-dom": "^18",
+    "recordrtc": "^5.6.2",
+    "socket.io-client": "^4.7.2"
   },
   "devDependencies": {
-    "@eslint/eslintrc": "^3",
-    "@tailwindcss/postcss": "^4",
-    "eslint": "^9",
-    "eslint-config-next": "15.3.1",
-    "tailwindcss": "^4"
+    "autoprefixer": "^10",
+    "eslint": "^8",
+    "eslint-config-next": "13.5.4",
+    "postcss": "^8",
+    "tailwindcss": "^3"
   }
 }
