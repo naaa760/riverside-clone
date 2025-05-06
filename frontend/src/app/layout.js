@@ -6,8 +6,8 @@ import { RecordingProvider } from "@/contexts/RecordingContext";
 const inter = Inter({ subsets: ["latin"] });
 
 export const metadata = {
-  title: "Riverside.fm Clone",
-  description: "A clone of Riverside.fm for recording and podcasting",
+  title: "RecordStudio",
+  description: "High-quality remote audio and video recording studio",
 };
 
 export default function RootLayout({ children }) {
