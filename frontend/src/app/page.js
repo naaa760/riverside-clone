@@ -1,4 +1,7 @@
+"use client";
+
 import Link from "next/link";
+import { SignedIn, SignedOut } from "@clerk/nextjs";
 
 export default function LandingPage() {
   return (
@@ -11,18 +14,29 @@ export default function LandingPage() {
           </Link>
 
           <div className="flex items-center gap-4">
-            <Link
-              href="/sign-in"
-              className="text-sm font-medium hover:underline"
-            >
-              Sign In
-            </Link>
-            <Link
-              href="/sign-up"
-              className="px-4 py-2 text-sm font-medium text-white bg-blue-600 rounded-md hover:bg-blue-700"
-            >
-              Get Started
-            </Link>
+            <SignedOut>
+              <Link
+                href="/sign-in"
+                className="text-sm font-medium hover:underline"
+              >
+                Sign In
+              </Link>
+              <Link
+                href="/sign-up"
+                className="px-4 py-2 text-sm font-medium text-white bg-blue-600 rounded-md hover:bg-blue-700"
+              >
+                Get Started
+              </Link>
+            </SignedOut>
+
+            <SignedIn>
+              <Link
+                href="/dashboard"
+                className="px-4 py-2 text-sm font-medium bg-gray-100 rounded-md hover:bg-gray-200"
+              >
+                Dashboard
+              </Link>
+            </SignedIn>
           </div>
         </div>
       </nav>
@@ -37,12 +51,24 @@ export default function LandingPage() {
           directly from your browser. No downloads required.
         </p>
         <div className="flex flex-col sm:flex-row gap-4 mt-10">
-          <Link
-            href="/sign-up"
-            className="px-6 py-3 text-white bg-blue-600 rounded-md hover:bg-blue-700 font-medium"
-          >
-            Get Started
-          </Link>
+          <SignedOut>
+            <Link
+              href="/sign-up"
+              className="px-6 py-3 text-white bg-blue-600 rounded-md hover:bg-blue-700 font-medium"
+            >
+              Get Started
+            </Link>
+          </SignedOut>
+
+          <SignedIn>
+            <Link
+              href="/dashboard"
+              className="px-6 py-3 text-white bg-blue-600 rounded-md hover:bg-blue-700 font-medium"
+            >
+              Go to Dashboard
+            </Link>
+          </SignedIn>
+
           <Link
             href="#features"
             className="px-6 py-3 border border-gray-300 rounded-md hover:bg-gray-50 font-medium"
