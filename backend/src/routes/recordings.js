@@ -294,4 +294,21 @@ router.post("/upload", auth, async (req, res) => {
   });
 });
 
+// Process a recording
+router.post("/process/:id", auth, async (req, res) => {
+  try {
+    const recordingId = req.params.id;
+    const rawFilePath = req.body.filePath;
+
+    // Instead of directly calling processRecording, use:
+    const { processRecording } = await processRecordingPromise;
+    const result = await processRecording(recordingId, rawFilePath);
+
+    res.json(result);
+  } catch (error) {
+    console.error("Error processing recording:", error);
+    res.status(500).json({ error: "Failed to process recording" });
+  }
+});
+
 export default router;

@@ -4,6 +4,9 @@ import cors from "cors";
 import helmet from "helmet";
 import mongoose from "mongoose";
 import dotenv from "dotenv";
+import fs from "fs";
+import path from "path";
+import { fileURLToPath } from "url";
 
 // Load environment variables
 dotenv.config();
@@ -49,6 +52,24 @@ app.get("/health", (req, res) => {
 
 // Setup WebRTC signaling server
 const io = setupSignalingServer(server);
+
+// Add this near the top of index.js
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
+
+// Ensure required directories exist
+const TEMP_DIR = path.join(__dirname, "../temp");
+const STORAGE_DIR = path.join(__dirname, "../storage");
+
+if (!fs.existsSync(TEMP_DIR)) {
+  fs.mkdirSync(TEMP_DIR, { recursive: true });
+  console.log("Created temp directory");
+}
+
+if (!fs.existsSync(STORAGE_DIR)) {
+  fs.mkdirSync(STORAGE_DIR, { recursive: true });
+  console.log("Created storage directory");
+}
 
 // Start server
 const PORT = process.env.PORT || 5000;

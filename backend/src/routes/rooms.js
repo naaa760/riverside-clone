@@ -1,7 +1,13 @@
 import express from "express";
+import path from "path";
+import { fileURLToPath } from "url";
 import { auth } from "../middleware/auth.js";
 import Room from "../models/Room.js";
 import User from "../models/User.js";
+
+// Create __dirname equivalent for ES modules
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
 
 const router = express.Router();
 
