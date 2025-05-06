@@ -1,55 +1,62 @@
 "use client";
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import DarkLayout from "@/components/DarkLayout";
+import { useRecordingContext } from "@/contexts/RecordingContext";
 
 export default function ProjectsPage() {
-  const [projects, setProjects] = useState([]);
-  const [isLoading, setIsLoading] = useState(true);
+  const router = useRouter();
+  const { projects, recordings, isLoading, addProject } = useRecordingContext();
   const [showCreateModal, setShowCreateModal] = useState(false);
+  const [newProject, setNewProject] = useState({
+    name: "",
+    description: "",
+  });
 
-  useEffect(() => {
-    // Fetch projects data
-    const fetchProjects = async () => {
-      try {
-        // In a real app, replace with actual API call
-        setTimeout(() => {
-          setProjects([
-            {
-              id: "proj-1",
-              name: "Weekly Podcast Series",
-              episodes: 12,
-              lastUpdated: "2 days ago",
-              collaborators: ["You", "John Smith", "Sarah Johnson"],
-              thumbnail: "/placeholder-project.jpg",
-            },
-            {
-              id: "proj-2",
-              name: "Marketing Interviews",
-              episodes: 5,
-              lastUpdated: "1 week ago",
-              collaborators: ["You", "Alex Williams"],
-              thumbnail: "/placeholder-project.jpg",
-            },
-            {
-              id: "proj-3",
-              name: "Product Tutorials",
-              episodes: 8,
-              lastUpdated: "3 days ago",
-              collaborators: ["You", "Emma Davis", "Michael Brown"],
-              thumbnail: "/placeholder-project.jpg",
-            },
-          ]);
-          setIsLoading(false);
-        }, 800);
-      } catch (error) {
-        console.error("Error fetching projects:", error);
-        setIsLoading(false);
-      }
-    };
+  // Handle form submission for new project
+  const handleCreateProject = (e) => {
+    e.preventDefault();
 
-    fetchProjects();
-  }, []);
+    if (!newProject.name.trim()) return;
+
+    // Create new project with the context
+    addProject({
+      id: `proj-${Date.now()}`,
+      name: newProject.name,
+      description: newProject.description,
+      collaborators: ["You"],
+    });
+
+    // Reset and close modal
+    setNewProject({ name: "", description: "" });
+    setShowCreateModal(false);
+  };
+
+  // Format date for display
+  const formatDate = (isoString) => {
+    const date = new Date(isoString);
+    const now = new Date();
+    const diffTime = Math.abs(now - date);
+    const diffDays = Math.floor(diffTime / (1000 * 60 * 60 * 24));
+
+    if (diffDays === 0) {
+      return "Today";
+    } else if (diffDays === 1) {
+      return "Yesterday";
+    } else if (diffDays < 7) {
+      return `${diffDays} days ago`;
+    } else if (diffDays < 30) {
+      return `${Math.floor(diffDays / 7)} weeks ago`;
+    } else {
+      return date.toLocaleDateString();
+    }
+  };
+
+  // Get project recordings
+  const getProjectRecordings = (projectId) => {
+    return recordings.filter((recording) => recording.projectId === projectId);
+  };
 
   return (
     <DarkLayout>
@@ -95,84 +102,107 @@ export default function ProjectsPage() {
           </div>
         ) : projects.length > 0 ? (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-            {projects.map((project) => (
-              <Link
-                key={project.id}
-                href={`/projects/${project.id}`}
-                className="bg-[#111111] rounded-lg overflow-hidden shadow-lg hover:shadow-xl transition-all transform hover:scale-[1.02] group"
-              >
-                <div className="h-40 bg-gray-800 flex items-center justify-center">
-                  <div className="w-16 h-16 rounded-full bg-gray-700 flex items-center justify-center">
-                    <svg
-                      className="w-8 h-8 text-gray-400"
-                      fill="none"
-                      viewBox="0 0 24 24"
-                      stroke="currentColor"
-                    >
-                      <path
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
-                        strokeWidth={2}
-                        d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10"
-                      />
-                    </svg>
+            {projects.map((project) => {
+              const projectRecordings = getProjectRecordings(project.id);
+              const recentRecording = projectRecordings[0];
+
+              return (
+                <Link
+                  href={`/projects/${project.id}`}
+                  key={project.id}
+                  className="bg-[#111111] rounded-lg overflow-hidden transition-transform hover:scale-[1.02]"
+                >
+                  <div className="h-40 bg-gray-900 relative">
+                    {projectRecordings.length > 0 ? (
+                      <>
+                        <div className="absolute inset-0 flex items-center justify-center bg-gray-900">
+                          <svg
+                            className="w-16 h-16 text-gray-700"
+                            fill="none"
+                            viewBox="0 0 24 24"
+                            stroke="currentColor"
+                          >
+                            <path
+                              strokeLinecap="round"
+                              strokeLinejoin="round"
+                              strokeWidth={2}
+                              d="M15 10l4.553-2.276A1 1 0 0121 8.618v6.764a1 1 0 01-1.447.894L15 14M5 18h8a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v8a2 2 0 002 2z"
+                            />
+                          </svg>
+                        </div>
+                        <div className="absolute bottom-0 left-0 right-0 p-3 bg-gradient-to-t from-black to-transparent">
+                          <div className="flex justify-between items-center">
+                            <div>
+                              <span className="text-xs text-gray-400">
+                                Latest recording:
+                              </span>
+                              <p className="text-sm truncate">
+                                {recentRecording?.name || "No recordings"}
+                              </p>
+                            </div>
+                            {recentRecording && (
+                              <span className="text-xs bg-gray-800 px-2 py-1 rounded">
+                                {new Date(
+                                  recentRecording.date
+                                ).toLocaleDateString()}
+                              </span>
+                            )}
+                          </div>
+                        </div>
+                      </>
+                    ) : (
+                      <div className="h-full flex items-center justify-center">
+                        <div className="text-center">
+                          <svg
+                            className="w-12 h-12 mx-auto text-gray-700 mb-2"
+                            fill="none"
+                            viewBox="0 0 24 24"
+                            stroke="currentColor"
+                          >
+                            <path
+                              strokeLinecap="round"
+                              strokeLinejoin="round"
+                              strokeWidth={2}
+                              d="M15 10l4.553-2.276A1 1 0 0121 8.618v6.764a1 1 0 01-1.447.894L15 14M5 18h8a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v8a2 2 0 002 2z"
+                            />
+                          </svg>
+                          <p className="text-sm text-gray-500">
+                            No recordings yet
+                          </p>
+                        </div>
+                      </div>
+                    )}
                   </div>
-                </div>
-                <div className="p-4">
-                  <h3 className="text-lg font-medium mb-2 group-hover:text-blue-400 transition-colors">
-                    {project.name}
-                  </h3>
-                  <div className="flex justify-between mb-2">
-                    <span className="text-sm text-gray-400">
-                      {project.episodes} episodes
-                    </span>
-                    <span className="text-sm text-gray-400">
-                      Updated {project.lastUpdated}
-                    </span>
-                  </div>
-                  <div className="mt-3">
-                    <div className="flex -space-x-2">
+                  <div className="p-4">
+                    <h3 className="text-lg font-medium mb-1">{project.name}</h3>
+                    <div className="flex justify-between items-center">
+                      <p className="text-sm text-gray-400">
+                        {project.episodes}{" "}
+                        {project.episodes === 1 ? "episode" : "episodes"}
+                      </p>
+                      <p className="text-xs text-gray-500">
+                        Updated {formatDate(project.lastUpdated)}
+                      </p>
+                    </div>
+                    <div className="mt-3 flex">
                       {project.collaborators.slice(0, 3).map((person, idx) => (
                         <div
                           key={idx}
-                          className="w-7 h-7 rounded-full bg-gray-700 border border-gray-900 flex items-center justify-center text-xs"
+                          className="w-7 h-7 rounded-full bg-gray-700 -ml-2 first:ml-0 border border-gray-900 flex items-center justify-center text-xs"
                         >
                           {person.charAt(0)}
                         </div>
                       ))}
                       {project.collaborators.length > 3 && (
-                        <div className="w-7 h-7 rounded-full bg-gray-700 border border-gray-900 flex items-center justify-center text-xs">
+                        <div className="w-7 h-7 rounded-full bg-gray-700 -ml-2 border border-gray-900 flex items-center justify-center text-xs">
                           +{project.collaborators.length - 3}
                         </div>
                       )}
                     </div>
                   </div>
-                </div>
-              </Link>
-            ))}
-
-            {/* Add new project card */}
-            <button
-              onClick={() => setShowCreateModal(true)}
-              className="bg-[#0e0e0e] border-2 border-dashed border-gray-700 rounded-lg h-full min-h-[220px] flex flex-col items-center justify-center hover:border-blue-500 transition-colors group"
-            >
-              <svg
-                className="w-12 h-12 text-gray-600 group-hover:text-blue-500 transition-colors mb-3"
-                fill="none"
-                viewBox="0 0 24 24"
-                stroke="currentColor"
-              >
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  strokeWidth={2}
-                  d="M12 6v6m0 0v6m0-6h6m-6 0H6"
-                />
-              </svg>
-              <span className="text-gray-500 group-hover:text-blue-500 transition-colors">
-                Create New Project
-              </span>
-            </button>
+                </Link>
+              );
+            })}
           </div>
         ) : (
           <div className="bg-[#111111] rounded-lg p-10 text-center">
@@ -243,7 +273,7 @@ export default function ProjectsPage() {
                 </svg>
               </button>
             </div>
-            <form className="p-6">
+            <form onSubmit={handleCreateProject} className="p-6">
               <div className="mb-4">
                 <label
                   htmlFor="projectName"
@@ -254,7 +284,12 @@ export default function ProjectsPage() {
                 <input
                   type="text"
                   id="projectName"
+                  value={newProject.name}
+                  onChange={(e) =>
+                    setNewProject({ ...newProject, name: e.target.value })
+                  }
                   placeholder="Enter project name"
+                  required
                   className="w-full bg-[#222222] border border-gray-700 rounded-md px-3 py-2 text-white focus:outline-none focus:ring-2 focus:ring-blue-500"
                 />
               </div>
@@ -269,6 +304,13 @@ export default function ProjectsPage() {
                 <textarea
                   id="description"
                   rows="3"
+                  value={newProject.description}
+                  onChange={(e) =>
+                    setNewProject({
+                      ...newProject,
+                      description: e.target.value,
+                    })
+                  }
                   placeholder="Enter project description"
                   className="w-full bg-[#222222] border border-gray-700 rounded-md px-3 py-2 text-white focus:outline-none focus:ring-2 focus:ring-blue-500"
                 ></textarea>

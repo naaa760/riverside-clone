@@ -1,108 +1,107 @@
 "use client";
 
-import { useState, useEffect, useRef, useCallback } from "react";
-import io from "socket.io-client";
+import { useState, useEffect, useRef } from "react";
 
 export default function useWebRTC(roomId, userId) {
   const [isConnected, setIsConnected] = useState(false);
   const [localStream, setLocalStream] = useState(null);
-  const [peers, setPeers] = useState([]);
+  const [peers, setPeers] = useState({});
+  const [audioEnabled, setAudioEnabled] = useState(true);
+  const [videoEnabled, setVideoEnabled] = useState(true);
   const [error, setError] = useState(null);
 
-  const socketRef = useRef(null);
   const peerConnectionsRef = useRef({});
+  const localStreamRef = useRef(null);
 
-  // Set up WebRTC and Socket.io
+  // Initialize WebRTC
   useEffect(() => {
-    // For demo, we'll use local media only
-    // In a real app, this would be connected to a real signaling server
-
-    if (!roomId || !userId) return;
-
-    // Get user media
-    const startMedia = async () => {
+    const setupMedia = async () => {
       try {
+        // Request user media
         const stream = await navigator.mediaDevices.getUserMedia({
-          video: true,
           audio: true,
+          video: true,
         });
 
         setLocalStream(stream);
+        localStreamRef.current = stream;
+        setIsConnected(true);
 
-        // In a full implementation, we would:
-        // 1. Connect to the signaling server
-        // 2. Create peers as other users join
-        // 3. Exchange SDP and ICE candidates
+        // In a real app, you would connect to a signaling server
+        // and set up peer connections here
 
-        // Simulate other peers for demo
-        // In a real app, these would come from the signaling server
+        // For demo purposes, we'll simulate peer data
         setTimeout(() => {
-          setPeers([
-            {
-              id: "peer-1",
+          setPeers({
+            peer1: {
+              id: "peer1",
               name: "John Smith",
-              videoRef: { current: null },
+              audioEnabled: true,
+              videoEnabled: true,
+              stream: null, // In a real app, this would be the remote stream
             },
-            {
-              id: "peer-2",
+            peer2: {
+              id: "peer2",
               name: "Sarah Johnson",
-              videoRef: { current: null },
+              audioEnabled: true,
+              videoEnabled: false,
+              stream: null,
             },
-          ]);
-          setIsConnected(true);
-        }, 1000);
+          });
+        }, 2000);
       } catch (err) {
         console.error("Error accessing media devices:", err);
         setError(
-          "Could not access camera or microphone. Please check permissions."
+          "Could not access camera or microphone. Please check your permissions."
         );
       }
     };
 
-    startMedia();
+    if (roomId && userId) {
+      setupMedia();
+    }
 
-    // Clean up
     return () => {
-      if (localStream) {
-        localStream.getTracks().forEach((track) => {
-          track.stop();
-        });
+      // Clean up
+      if (localStreamRef.current) {
+        localStreamRef.current.getTracks().forEach((track) => track.stop());
       }
 
-      // In a real app:
-      // - Disconnect from signaling server
-      // - Close all peer connections
+      // Close all peer connections
+      Object.values(peerConnectionsRef.current).forEach((pc) => {
+        if (pc) pc.close();
+      });
     };
   }, [roomId, userId]);
 
   // Toggle audio
-  const toggleAudio = useCallback(() => {
-    if (localStream) {
-      const audioTrack = localStream.getAudioTracks()[0];
+  const toggleAudio = () => {
+    if (localStreamRef.current) {
+      const audioTrack = localStreamRef.current.getAudioTracks()[0];
       if (audioTrack) {
         audioTrack.enabled = !audioTrack.enabled;
-        return audioTrack.enabled;
+        setAudioEnabled(audioTrack.enabled);
       }
     }
-    return false;
-  }, [localStream]);
+  };
 
   // Toggle video
-  const toggleVideo = useCallback(() => {
-    if (localStream) {
-      const videoTrack = localStream.getVideoTracks()[0];
+  const toggleVideo = () => {
+    if (localStreamRef.current) {
+      const videoTrack = localStreamRef.current.getVideoTracks()[0];
       if (videoTrack) {
         videoTrack.enabled = !videoTrack.enabled;
-        return videoTrack.enabled;
+        setVideoEnabled(videoTrack.enabled);
       }
     }
-    return false;
-  }, [localStream]);
+  };
 
   return {
     isConnected,
     localStream,
     peers,
+    audioEnabled,
+    videoEnabled,
     error,
     toggleAudio,
     toggleVideo,

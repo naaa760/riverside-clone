@@ -17,51 +17,87 @@ const rooms = [
   },
 ];
 
-export async function GET() {
-  const { userId } = auth();
+export async function GET(request) {
+  try {
+    const { userId } = auth();
 
-  if (!userId) {
-    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    if (!userId) {
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    }
+
+    // In a real app, you would fetch rooms from database
+    // For the demo, we'll return mock rooms
+
+    const rooms = [
+      {
+        id: "room-1",
+        name: "Weekly Team Sync",
+        type: "audio-video",
+        createdAt: new Date(Date.now() - 7 * 24 * 60 * 60 * 1000).toISOString(),
+        createdBy: userId,
+        inviteUrl: `${process.env.NEXT_PUBLIC_APP_URL}/room/room-1`,
+      },
+      {
+        id: "room-2",
+        name: "Podcast Recording",
+        type: "audio-only",
+        createdAt: new Date(Date.now() - 2 * 24 * 60 * 60 * 1000).toISOString(),
+        createdBy: userId,
+        inviteUrl: `${process.env.NEXT_PUBLIC_APP_URL}/room/room-2`,
+      },
+    ];
+
+    return NextResponse.json({ rooms });
+  } catch (error) {
+    console.error("Error fetching rooms:", error);
+    return NextResponse.json(
+      { error: "Failed to fetch rooms" },
+      { status: 500 }
+    );
   }
-
-  // In a real app, fetch from database
-  // Filter rooms for this user
-  const userRooms = rooms.filter((room) => room.userId === "user123"); // For demo, hardcoded
-
-  return NextResponse.json(userRooms);
 }
 
 export async function POST(request) {
-  const { userId } = auth();
-
-  if (!userId) {
-    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-  }
-
   try {
-    const { name } = await request.json();
+    const { userId } = auth();
 
-    if (!name || name.trim() === "") {
+    if (!userId) {
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    }
+
+    const data = await request.json();
+
+    // Validate required fields
+    if (!data.name) {
       return NextResponse.json(
         { error: "Room name is required" },
         { status: 400 }
       );
     }
 
-    // In a real app, save to database
-    const newRoom = {
-      id: `room-${rooms.length + 1}`,
-      name,
-      userId,
+    // In a real app, you would:
+    // 1. Save room to database
+    // 2. Create signaling setup for WebRTC
+    // 3. Return room details
+
+    // For the demo, we'll return a mock room
+    const roomId = `room-${Date.now()}`;
+
+    const room = {
+      id: roomId,
+      name: data.name,
+      type: data.type || "audio-video",
       createdAt: new Date().toISOString(),
+      createdBy: userId,
+      inviteUrl: `${process.env.NEXT_PUBLIC_APP_URL}/room/${roomId}`,
     };
 
-    // Add to mock data
-    rooms.push(newRoom);
-
-    return NextResponse.json(newRoom);
+    return NextResponse.json({ room });
   } catch (error) {
     console.error("Error creating room:", error);
-    return NextResponse.json({ error: "Error creating room" }, { status: 500 });
+    return NextResponse.json(
+      { error: "Failed to create room" },
+      { status: 500 }
+    );
   }
 }

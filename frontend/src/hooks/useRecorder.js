@@ -1,17 +1,18 @@
 "use client";
 
-import { useState, useEffect, useRef } from "react";
+import { useState, useRef, useEffect } from "react";
+import { useRecordingContext } from "@/contexts/RecordingContext";
 
 export default function useRecorder(stream, roomId) {
+  const { addRecording, updateRecordingStatus } = useRecordingContext();
   const [isRecording, setIsRecording] = useState(false);
   const [recordingTime, setRecordingTime] = useState(0);
   const [recordingStatus, setRecordingStatus] = useState("idle"); // idle, recording, processing, uploading, done, error
-  const [recordingUrl, setRecordingUrl] = useState(null);
 
   const mediaRecorderRef = useRef(null);
-  const recordedChunksRef = useRef([]);
+  const chunksRef = useRef([]);
   const timerRef = useRef(null);
-  const startTimeRef = useRef(null);
+  const recordingIdRef = useRef(null);
 
   // Clean up on unmount
   useEffect(() => {
@@ -19,62 +20,96 @@ export default function useRecorder(stream, roomId) {
       if (timerRef.current) {
         clearInterval(timerRef.current);
       }
-      if (mediaRecorderRef.current && isRecording) {
+      if (
+        mediaRecorderRef.current &&
+        mediaRecorderRef.current.state === "recording"
+      ) {
         mediaRecorderRef.current.stop();
       }
     };
-  }, [isRecording]);
+  }, []);
 
-  // Start the recording process
+  // Start recording
   const startRecording = () => {
     if (!stream) {
       setRecordingStatus("error");
       return;
     }
 
+    // Reset
+    chunksRef.current = [];
+    setRecordingTime(0);
+    recordingIdRef.current = `rec-${Date.now()}`;
+
     try {
-      recordedChunksRef.current = [];
+      // Create MediaRecorder
+      const options = { mimeType: "video/webm;codecs=vp9,opus" };
+      mediaRecorderRef.current = new MediaRecorder(stream, options);
 
-      // Create a media recorder
-      const mediaRecorder = new MediaRecorder(stream, {
-        mimeType: "video/webm;codecs=vp9,opus",
-      });
-
-      mediaRecorderRef.current = mediaRecorder;
-
-      // Handle data as it becomes available
-      mediaRecorder.ondataavailable = (event) => {
-        if (event.data.size > 0) {
-          recordedChunksRef.current.push(event.data);
+      // Handle data available event
+      mediaRecorderRef.current.ondataavailable = (e) => {
+        if (e.data && e.data.size > 0) {
+          chunksRef.current.push(e.data);
         }
       };
 
-      // Handle when recording stops
-      mediaRecorder.onstop = () => {
-        setIsRecording(false);
+      // Handle recording stop
+      mediaRecorderRef.current.onstop = async () => {
+        // Process recording
+        setRecordingStatus("processing");
 
-        if (timerRef.current) {
-          clearInterval(timerRef.current);
-          timerRef.current = null;
+        try {
+          // Simulate processing time
+          await new Promise((resolve) => setTimeout(resolve, 2000));
+
+          // Create blob from chunks
+          const blob = new Blob(chunksRef.current, { type: "video/webm" });
+          const url = URL.createObjectURL(blob);
+          const fileSize = Math.round(blob.size / (1024 * 1024)) + "MB";
+
+          // Update recording status to uploading
+          setRecordingStatus("uploading");
+          updateRecordingStatus(recordingIdRef.current, "processing", 50);
+
+          // Simulate upload time
+          await new Promise((resolve) => setTimeout(resolve, 3000));
+
+          // Add to recordings context
+          const newRecording = {
+            id: recordingIdRef.current,
+            name: `Recording ${new Date().toLocaleString()}`,
+            date: new Date().toISOString(),
+            duration: recordingTime,
+            status: "ready",
+            participants: ["You", "John Smith", "Sarah Johnson"],
+            thumbnail: "/placeholder-recording.jpg",
+            fileSize,
+            projectId: "proj-1", // You could make this dynamic
+            url,
+          };
+
+          addRecording(newRecording);
+          updateRecordingStatus(recordingIdRef.current, "ready", fileSize);
+          setRecordingStatus("done");
+
+          // Reset after a delay
+          setTimeout(() => {
+            setRecordingStatus("idle");
+          }, 3000);
+        } catch (error) {
+          console.error("Error processing recording:", error);
+          setRecordingStatus("error");
         }
-
-        // Create a blob from the recorded chunks
-        processRecording();
       };
 
-      // Start the media recorder
-      mediaRecorder.start(1000); // Collect data every second
-
-      // Update UI state
+      // Start recording
+      mediaRecorderRef.current.start(1000);
       setIsRecording(true);
       setRecordingStatus("recording");
-      setRecordingTime(0);
-      startTimeRef.current = Date.now();
 
-      // Start a timer to update the recording time
+      // Start timer
       timerRef.current = setInterval(() => {
-        const seconds = Math.floor((Date.now() - startTimeRef.current) / 1000);
-        setRecordingTime(seconds);
+        setRecordingTime((prev) => prev + 1);
       }, 1000);
     } catch (error) {
       console.error("Error starting recording:", error);
@@ -82,74 +117,27 @@ export default function useRecorder(stream, roomId) {
     }
   };
 
-  // Stop the recording process
+  // Stop recording
   const stopRecording = () => {
-    if (mediaRecorderRef.current && isRecording) {
+    if (
+      mediaRecorderRef.current &&
+      mediaRecorderRef.current.state === "recording"
+    ) {
       mediaRecorderRef.current.stop();
+      setIsRecording(false);
+
+      if (timerRef.current) {
+        clearInterval(timerRef.current);
+        timerRef.current = null;
+      }
     }
   };
 
-  // Process the recording after stopping
-  const processRecording = async () => {
-    try {
-      setRecordingStatus("processing");
-
-      // Create a blob from the recorded chunks
-      const blob = new Blob(recordedChunksRef.current, {
-        type: "video/webm",
-      });
-
-      // Create a local URL for preview if needed
-      const url = URL.createObjectURL(blob);
-      setRecordingUrl(url);
-
-      // Upload the blob to the server
-      await uploadRecording(blob);
-    } catch (error) {
-      console.error("Error processing recording:", error);
-      setRecordingStatus("error");
-    }
-  };
-
-  // Upload the recording to the server
-  const uploadRecording = async (blob) => {
-    try {
-      setRecordingStatus("uploading");
-
-      // In a real app, get a signed URL and upload the file
-      // const response = await fetch(`/api/recordings/upload?roomId=${roomId}`, {
-      //   method: 'POST',
-      // });
-      // const { uploadUrl } = await response.json();
-      // await fetch(uploadUrl, {
-      //   method: 'PUT',
-      //   body: blob,
-      //   headers: {
-      //     'Content-Type': 'video/webm',
-      //   },
-      // });
-
-      // Simulate API call for demo
-      await new Promise((resolve) => setTimeout(resolve, 2000));
-
-      // Mark as complete
-      setRecordingStatus("done");
-
-      // After 5 seconds, reset the status to idle
-      setTimeout(() => {
-        setRecordingStatus("idle");
-      }, 5000);
-    } catch (error) {
-      console.error("Error uploading recording:", error);
-      setRecordingStatus("error");
-    }
-  };
-
-  // Format time helper function
+  // Format time for display (MM:SS)
   const formatTime = (seconds) => {
-    const minutes = Math.floor(seconds / 60);
+    const mins = Math.floor(seconds / 60);
     const secs = seconds % 60;
-    return `${minutes.toString().padStart(2, "0")}:${secs
+    return `${mins.toString().padStart(2, "0")}:${secs
       .toString()
       .padStart(2, "0")}`;
   };
@@ -158,7 +146,6 @@ export default function useRecorder(stream, roomId) {
     isRecording,
     recordingTime,
     recordingStatus,
-    recordingUrl,
     startRecording,
     stopRecording,
     formatTime,

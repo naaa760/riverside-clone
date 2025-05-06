@@ -1,32 +1,23 @@
-import { Geist, Geist_Mono } from "next/font/google";
-import "./globals.css";
+import { Inter } from "next/font/google";
 import { ClerkProvider } from "@clerk/nextjs";
+import "./globals.css";
+import { RecordingProvider } from "@/contexts/RecordingContext";
 
-const geistSans = Geist({
-  variable: "--font-geist-sans",
-  subsets: ["latin"],
-});
-
-const geistMono = Geist_Mono({
-  variable: "--font-geist-mono",
-  subsets: ["latin"],
-});
+const inter = Inter({ subsets: ["latin"] });
 
 export const metadata = {
-  title: "RecordStudio - Remote Recording Platform",
-  description: "High-quality remote audio and video recording studio",
+  title: "Riverside.fm Clone",
+  description: "A clone of Riverside.fm for recording and podcasting",
 };
 
 export default function RootLayout({ children }) {
   return (
-    <ClerkProvider>
-      <html lang="en">
-        <body
-          className={`${geistSans.variable} ${geistMono.variable} antialiased`}
-        >
-          {children}
-        </body>
-      </html>
-    </ClerkProvider>
+    <html lang="en">
+      <body className={inter.className}>
+        <ClerkProvider>
+          <RecordingProvider>{children}</RecordingProvider>
+        </ClerkProvider>
+      </body>
+    </html>
   );
 }
