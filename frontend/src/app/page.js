@@ -1,114 +1,178 @@
-"use client";
-
 import Link from "next/link";
-import { useAuth, UserButton } from "@clerk/nextjs";
 
 export default function LandingPage() {
-  const { isSignedIn } = useAuth();
-
   return (
-    <div className="min-h-screen flex flex-col">
-      {/* Header for authenticated users */}
-      {isSignedIn && (
-        <header className="bg-white shadow">
-          <div className="max-w-7xl mx-auto px-4 py-3 flex justify-between items-center">
-            <Link href="/" className="font-bold text-xl">
-              Riverside Clone
+    <div className="flex flex-col min-h-screen">
+      {/* Navbar */}
+      <nav className="border-b">
+        <div className="container flex items-center justify-between h-16 px-4 mx-auto">
+          <Link href="/" className="font-bold text-xl">
+            RecordStudio
+          </Link>
+
+          <div className="flex items-center gap-4">
+            <Link
+              href="/sign-in"
+              className="text-sm font-medium hover:underline"
+            >
+              Sign In
             </Link>
-            <div className="flex items-center gap-4">
-              <Link
-                href="/dashboard"
-                className="text-blue-600 hover:text-blue-800 font-medium"
-              >
-                Dashboard
-              </Link>
-              <UserButton />
-            </div>
+            <Link
+              href="/sign-up"
+              className="px-4 py-2 text-sm font-medium text-white bg-blue-600 rounded-md hover:bg-blue-700"
+            >
+              Get Started
+            </Link>
           </div>
-        </header>
-      )}
+        </div>
+      </nav>
 
       {/* Hero Section */}
-      <section className="flex-1 flex flex-col items-center justify-center px-4 py-12 text-center">
-        <h1 className="text-5xl font-bold tracking-tight mb-6">
-          High-quality remote recordings, <br />
-          made simple.
+      <section className="flex flex-col items-center justify-center px-4 py-20 text-center lg:py-32">
+        <h1 className="text-4xl font-bold tracking-tight sm:text-5xl md:text-6xl">
+          High-Quality Remote Recording Studio
         </h1>
-        <p className="text-xl max-w-2xl mb-10 text-gray-600">
-          Record studio-quality audio and video interviews, podcasts, and
-          presentations from anywhere, directly from your browser.
+        <p className="mt-6 text-xl text-gray-600 max-w-3xl">
+          Record studio-quality audio and video interviews, podcasts, and more -
+          directly from your browser. No downloads required.
         </p>
-
-        <div className="flex flex-col sm:flex-row gap-4">
-          {isSignedIn ? (
-            <Link
-              href="/dashboard"
-              className="px-8 py-3 bg-blue-600 hover:bg-blue-700 text-white font-medium rounded-lg transition-colors"
-            >
-              Go to Dashboard
-            </Link>
-          ) : (
-            <>
-              <Link
-                href="/sign-up"
-                className="px-8 py-3 bg-blue-600 hover:bg-blue-700 text-white 
-                font-medium rounded-lg transition-colors"
-              >
-                Sign Up Free
-              </Link>
-              <Link
-                href="/sign-in"
-                className="px-8 py-3 border border-gray-300 hover:border-gray-400 
-                text-gray-800 font-medium rounded-lg transition-colors"
-              >
-                Log In
-              </Link>
-            </>
-          )}
+        <div className="flex flex-col sm:flex-row gap-4 mt-10">
+          <Link
+            href="/sign-up"
+            className="px-6 py-3 text-white bg-blue-600 rounded-md hover:bg-blue-700 font-medium"
+          >
+            Get Started
+          </Link>
+          <Link
+            href="#features"
+            className="px-6 py-3 border border-gray-300 rounded-md hover:bg-gray-50 font-medium"
+          >
+            Learn More
+          </Link>
         </div>
       </section>
 
       {/* Features Section */}
-      <section className="py-16 bg-gray-50">
-        <div className="max-w-7xl mx-auto px-4">
-          <h2 className="text-3xl font-bold text-center mb-12">Key Features</h2>
-
-          <div className="grid md:grid-cols-3 gap-8">
-            <FeatureCard
-              title="Local Recording"
-              description="Crystal-clear audio and video recorded locally on each participant's device."
-              icon="🎥"
-            />
-            <FeatureCard
-              title="Simple Sharing"
-              description="Share a simple link to invite guests. No downloads or accounts required for them."
-              icon="🔗"
-            />
-            <FeatureCard
-              title="Cloud Storage"
-              description="All recordings are automatically uploaded and processed in the cloud."
-              icon="☁️"
-            />
+      <section id="features" className="py-20 bg-gray-50">
+        <div className="container px-4 mx-auto">
+          <h2 className="text-3xl font-bold text-center mb-16">
+            Why Choose Our Platform?
+          </h2>
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+            {features.map((feature, index) => (
+              <div
+                key={index}
+                className="flex flex-col items-center p-6 bg-white rounded-lg shadow-sm"
+              >
+                <div className="p-3 rounded-full bg-blue-100 mb-4">
+                  {feature.icon}
+                </div>
+                <h3 className="text-xl font-semibold mb-2">{feature.title}</h3>
+                <p className="text-gray-600 text-center">
+                  {feature.description}
+                </p>
+              </div>
+            ))}
           </div>
         </div>
       </section>
 
-      {/* Footer */}
-      <footer className="py-8 bg-gray-100 text-center">
-        <p className="text-gray-600">
-          © 2023 Your Riverside Clone. All rights reserved.
-        </p>
+      {/* CTA Section */}
+      <section className="py-20 text-center">
+        <div className="container px-4 mx-auto">
+          <h2 className="text-3xl font-bold mb-6">Ready to Record?</h2>
+          <p className="text-xl text-gray-600 max-w-2xl mx-auto mb-10">
+            Start recording professional audio and video content in minutes with
+            our easy-to-use platform.
+          </p>
+          <Link
+            href="/sign-up"
+            className="px-6 py-3 text-white bg-blue-600 rounded-md hover:bg-blue-700 font-medium"
+          >
+            Create Your Account
+          </Link>
+        </div>
+      </section>
+
+      {/* Simple Footer */}
+      <footer className="border-t py-8 bg-gray-50">
+        <div className="container px-4 mx-auto text-center text-gray-600">
+          <p>© {new Date().getFullYear()} RecordStudio. All rights reserved.</p>
+        </div>
       </footer>
     </div>
   );
 }
 
-function FeatureCard({ title, description, icon }) {
-  return (
-    <div className="p-6 bg-white rounded-lg shadow-sm">
-      <div className="text-4xl mb-4">{icon}</div>
-      <h3 className="text-xl font-semibold mb-2">{title}</h3>
-      <p className="text-gray-600">{description}</p>
-    </div>
-  );
-}
+// Feature data
+const features = [
+  {
+    title: "Local Recording",
+    description:
+      "Each participant records locally for studio-quality audio and video without internet interruptions.",
+    icon: (
+      <svg
+        xmlns="http://www.w3.org/2000/svg"
+        width="24"
+        height="24"
+        viewBox="0 0 24 24"
+        fill="none"
+        stroke="currentColor"
+        strokeWidth="2"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+        className="text-blue-600"
+      >
+        <circle cx="12" cy="12" r="10" />
+        <polygon points="10 8 16 12 10 16 10 8" />
+      </svg>
+    ),
+  },
+  {
+    title: "Multi-Party Recording",
+    description:
+      "Connect with multiple participants in real-time with high-quality video streaming.",
+    icon: (
+      <svg
+        xmlns="http://www.w3.org/2000/svg"
+        width="24"
+        height="24"
+        viewBox="0 0 24 24"
+        fill="none"
+        stroke="currentColor"
+        strokeWidth="2"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+        className="text-blue-600"
+      >
+        <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path>
+        <circle cx="9" cy="7" r="4"></circle>
+        <path d="M23 21v-2a4 4 0 0 0-3-3.87"></path>
+        <path d="M16 3.13a4 4 0 0 1 0 7.75"></path>
+      </svg>
+    ),
+  },
+  {
+    title: "Easy Sharing",
+    description:
+      "Share recordings instantly with secure cloud storage and easy download options.",
+    icon: (
+      <svg
+        xmlns="http://www.w3.org/2000/svg"
+        width="24"
+        height="24"
+        viewBox="0 0 24 24"
+        fill="none"
+        stroke="currentColor"
+        strokeWidth="2"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+        className="text-blue-600"
+      >
+        <path d="M4 12v8a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-8"></path>
+        <polyline points="16 6 12 2 8 6"></polyline>
+        <line x1="12" y1="2" x2="12" y2="15"></line>
+      </svg>
+    ),
+  },
+];
